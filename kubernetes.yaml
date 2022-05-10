@@ -1,0 +1,63 @@
+#创建deployment
+# Deploy_Name 
+# Name_Space
+# Image_Version
+# Route_Name
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: Deploy_Name
+ namespace: Name_Space
+spec:
+ replicas: 1
+ selector:
+    matchLabels:
+      app: Deploy_Name
+ template:
+  metadata:
+   annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "Deploy_Name"
+        dapr.io/app-port: "80"
+        dapr.io/config: "dapr-config"
+        dapr.io/enable-metrics: "true"
+        dapr.io/metrics-port: "9090"
+   labels:
+    app: Deploy_Name
+  spec:
+   containers:
+    - name: Deploy_Name
+      image: a121984376/Deploy_Name:Image_Version
+      imagePullPolicy: IfNotPresent
+      ports:
+       - containerPort: 80
+      #存活探针 
+      livenessProbe:
+       httpGet:
+        path: /Route_Name/metrics
+        port: 80
+       initialDelaySeconds: 10
+       periodSeconds: 3
+      #可读探针
+      readinessProbe:
+       httpGet:
+        path: /Route_Name/metrics
+        port: 80
+       initialDelaySeconds: 10
+       periodSeconds: 3
+---
+#创建Service
+apiVersion: v1
+kind: Service
+metadata:
+ name: svc-Deploy_Name
+ namespace: Name_Space
+spec:
+ type: NodePort
+ selector:
+  app: Deploy_Name
+ ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30066
